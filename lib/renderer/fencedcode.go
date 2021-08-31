@@ -43,21 +43,23 @@ func (r *ConfluenceFencedCodeBlockHTMLRender) renderConfluenceFencedCode(w util.
 		// If it is a macro create the macro
 		if langString == "CONFLUENCE-MACRO" {
 			r.writeMacro(w, source, n)
+		} else if langString == "CONFLUENCE-MACRO-RAW" {
+			r.writeMacroRaw(w, source, n)
 		} else {
 			// else insert a code-macro
 			s := `<ac:structured-macro ac:name="code" ac:schema-version="1">`
 			s = s + `<ac:parameter ac:name="theme">Confluence</ac:parameter>`
 			s = s + `<ac:parameter ac:name="linenumbers">true</ac:parameter>`
-	
+
 			if language != nil {
 				s = s + `<ac:parameter ac:name="language">` + langString + `</ac:parameter>`
 			}
-	
+
 			s = s + `<ac:plain-text-body><![CDATA[ `
 			_, _ = w.WriteString(s)
 			r.writeLines(w, source, n)
 			}
-	} else if langString != "CONFLUENCE-MACRO" {
+	} else if langString != "CONFLUENCE-MACRO" && langString != "CONFLUENCE-MACRO-RAW" {
 		// No special handling for the CONFLUENCE-MACRO, just for the code macros
 		s := ` ]]></ac:plain-text-body></ac:structured-macro>`
 		_, _ = w.WriteString(s)
@@ -109,3 +111,13 @@ func (r *ConfluenceFencedCodeBlockHTMLRender) writeMacro(w util.BufWriter, sourc
 	// and finish it off
 	w.WriteString("</ac:structured-macro>")
 }
+
+func (r *ConfluenceFencedCodeBlockHTMLRender) writeMacroRaw(w util.BufWriter, source []byte, n ast.Node) {
+	l := n.Lines().Len()
+	for i := 0; i < l; i++ {
+		line := n.Lines().At(i)
+		text := string(line.Value(source))
+		w.WriteString(text)
+	}
+}
+
